@@ -1,0 +1,6 @@
+{
+  "name": "studyHUB-inivra learn",
+  "description": "A premium, commercial-grade digital learning ecosystem with an integrated AI assistant supporting students, teachers, parents, and school administrators.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

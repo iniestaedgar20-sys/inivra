@@ -1,0 +1,192 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing educational and role settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["Student", "Teacher", "Admin", "Parent", "Educator", "SchoolAdmin"] },
+        "avatar": { "type": "string", "maxLength": 2048 },
+        "bio": { "type": "string", "maxLength": 1000 },
+        "balance": { "type": "number" },
+        "schoolId": { "type": "string", "maxLength": 128 },
+        "isIndependent": { "type": "boolean" },
+        "isVerified": { "type": "boolean" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Interactive course and learning modules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "category": { "type": "string", "maxLength": 64 },
+        "price": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "number" },
+        "image": { "type": "string", "maxLength": 2048 },
+        "difficulty": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"] },
+        "duration": { "type": "string", "maxLength": 64 },
+        "educatorId": { "type": "string", "maxLength": 128 },
+        "educatorName": { "type": "string", "maxLength": 128 },
+        "enrolledCount": { "type": "number" }
+      },
+      "required": ["id", "title", "category", "price", "educatorId"]
+    },
+    "Classroom": {
+      "title": "Classroom",
+      "description": "Virtual classroom hub for teachers, schools, and students",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 64 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "teacherName": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 32 },
+        "schedule": { "type": "string", "maxLength": 128 },
+        "description": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["id", "name", "subject", "teacherId", "code"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Tutor and faculty booking sessions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "tutorId": { "type": "string", "maxLength": 128 },
+        "tutorName": { "type": "string", "maxLength": 128 },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 32 },
+        "time": { "type": "string", "maxLength": 32 },
+        "duration": { "type": "number" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["Scheduled", "Completed", "Cancelled"] },
+        "videoCallId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "tutorId", "studentId", "date", "status"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Messaging conversation channel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "lastMessage": { "type": "string", "maxLength": 1000 },
+        "lastMessageTime": { "type": "string", "maxLength": 64 },
+        "unreadCount": { "type": "number" }
+      },
+      "required": ["id"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Individual message within a conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "conversationId": { "type": "string", "maxLength": 128 },
+        "senderId": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 128 },
+        "senderAvatar": { "type": "string", "maxLength": 2048 },
+        "content": { "type": "string", "maxLength": 5000 },
+        "timestamp": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "conversationId", "senderId", "content"]
+    },
+    "MarketplaceProduct": {
+      "title": "MarketplaceProduct",
+      "description": "Educator created lesson materials and resources",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "category": { "type": "string", "enum": ["Lesson Plan", "PPT", "Worksheet", "PDF Note", "Exam Paper", "Revision Guide", "Template"] },
+        "price": { "type": "number" },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 128 },
+        "downloads": { "type": "number" },
+        "rating": { "type": "number" },
+        "fileUrl": { "type": "string", "maxLength": 2048 }
+      },
+      "required": ["id", "title", "category", "price", "authorId"]
+    },
+    "SchoolApproval": {
+      "title": "SchoolApproval",
+      "description": "School administration institutional registrations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "schoolName": { "type": "string", "maxLength": 256 },
+        "adminEmail": { "type": "string", "maxLength": 128 },
+        "taxId": { "type": "string", "maxLength": 64 },
+        "address": { "type": "string", "maxLength": 256 },
+        "phoneNumber": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] },
+        "submittedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "schoolName", "adminEmail", "status"]
+    },
+    "InivraNotification": {
+      "title": "InivraNotification",
+      "description": "User notification items",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "message": { "type": "string", "maxLength": 1024 },
+        "date": { "type": "string", "maxLength": 64 },
+        "read": { "type": "boolean" },
+        "type": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "title", "message"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles and educational settings"
+    },
+    "/courses/{courseId}": {
+      "schema": "Course",
+      "description": "Educational courses collection"
+    },
+    "/classrooms/{classroomId}": {
+      "schema": "Classroom",
+      "description": "Teacher and school classrooms"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Tutor and mentor bookings"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Direct chat conversation metadata"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Chat messages within a conversation"
+    },
+    "/marketplaceProducts/{productId}": {
+      "schema": "MarketplaceProduct",
+      "description": "Teacher marketplace assets and study packs"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "InivraNotification",
+      "description": "Direct user notifications"
+    },
+    "/schoolApprovals/{approvalId}": {
+      "schema": "SchoolApproval",
+      "description": "Institutional school onboarding records"
+    }
+  }
+}

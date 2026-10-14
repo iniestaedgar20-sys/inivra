@@ -1,0 +1,176 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.provider_id == 'anonymous');
+    }
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == 'iniestaedgar20@gmail.com';
+    }
+    function isAdmin() {
+      return isBootstrappedAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Connection Health Check Probe
+    match /test/{probeId} {
+      allow read: if true;
+    }
+
+    // Entity Validation Helpers
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'role']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 128 &&
+             data.email is string && data.email.size() <= 128 &&
+             data.role in ['Student', 'Teacher', 'Admin', 'Parent', 'Educator', 'SchoolAdmin'];
+    }
+
+    function isValidCourse(data) {
+      return data.keys().hasAll(['id', 'title', 'category', 'price', 'educatorId']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.category is string && data.category.size() <= 64 &&
+             data.price is number && data.price >= 0 &&
+             data.educatorId is string && data.educatorId.size() <= 128;
+    }
+
+    function isValidClassroom(data) {
+      return data.keys().hasAll(['id', 'name', 'subject', 'teacherId', 'code']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 128 &&
+             data.subject is string && data.subject.size() <= 64 &&
+             data.teacherId is string && data.teacherId.size() <= 128 &&
+             data.code is string && data.code.size() <= 32;
+    }
+
+    function isValidBooking(data) {
+      return data.keys().hasAll(['id', 'tutorId', 'studentId', 'date', 'status']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.tutorId is string && data.tutorId.size() <= 128 &&
+             data.studentId is string && data.studentId.size() <= 128 &&
+             data.date is string && data.date.size() <= 32 &&
+             data.status in ['Scheduled', 'Completed', 'Cancelled'];
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['id', 'conversationId', 'senderId', 'content']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.conversationId is string && data.conversationId.size() <= 128 &&
+             data.senderId is string && data.senderId.size() <= 128 &&
+             data.content is string && data.content.size() <= 5000;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'title', 'category', 'price', 'authorId']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.category in ['Lesson Plan', 'PPT', 'Worksheet', 'PDF Note', 'Exam Paper', 'Revision Guide', 'Template'] &&
+             data.price is number && data.price >= 0 &&
+             data.authorId is string && data.authorId.size() <= 128;
+    }
+
+    function isValidSchoolApproval(data) {
+      return data.keys().hasAll(['id', 'schoolName', 'adminEmail', 'status']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.schoolName is string && data.schoolName.size() <= 256 &&
+             data.adminEmail is string && data.adminEmail.size() <= 128 &&
+             data.status in ['Pending', 'Approved', 'Rejected'];
+    }
+
+    // Rules for User Profiles
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && (request.auth.uid == userId || request.auth.token.email == incoming().email || isAdmin()) && isValidUser(incoming()) &&
+                    (incoming().role != 'Admin' || isBootstrappedAdmin());
+      allow update: if isSignedIn() && (request.auth.uid == userId || request.auth.token.email == incoming().email || isAdmin()) && isValidUser(incoming()) &&
+                    (isAdmin() || incoming().role == existing().role);
+      allow delete: if isAdmin();
+    }
+
+    // Rules for Courses
+    match /courses/{courseId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidCourse(incoming()) && (incoming().educatorId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && isValidCourse(incoming()) && (existing().educatorId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().educatorId == request.auth.uid || isAdmin());
+    }
+
+    // Rules for Classrooms
+    match /classrooms/{classroomId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidClassroom(incoming()) && (incoming().teacherId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && isValidClassroom(incoming()) && (existing().teacherId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().teacherId == request.auth.uid || isAdmin());
+    }
+
+    // Rules for Bookings
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && (resource.data.studentId == request.auth.uid || resource.data.tutorId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidBooking(incoming()) && (incoming().studentId == request.auth.uid || incoming().tutorId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && isValidBooking(incoming()) && (existing().studentId == request.auth.uid || existing().tutorId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().studentId == request.auth.uid || existing().tutorId == request.auth.uid || isAdmin());
+    }
+
+    // Rules for Conversations
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && isValidMessage(incoming()) && (incoming().senderId == request.auth.uid || isAdmin());
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // Rules for Marketplace Products
+    match /marketplaceProducts/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidProduct(incoming()) && (incoming().authorId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && isValidProduct(incoming()) && (existing().authorId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().authorId == request.auth.uid || isAdmin());
+    }
+
+    match /marketplace_products/{productId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
+    }
+
+    // Rules for Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // Rules for School Approvals
+    match /schoolApprovals/{approvalId} {
+      allow get: if isSignedIn() && (resource.data.adminEmail == request.auth.token.email || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidSchoolApproval(incoming());
+      allow update, delete: if isAdmin();
+    }
+  }
+}
